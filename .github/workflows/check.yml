@@ -1,0 +1,26 @@
+name: check
+on:
+  workflow_dispatch:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v3
+        if: ${{ !env.ACT }}
+        with:
+          node-version: '18.18.2'
+          cache: 'npm'
+      - uses: tj-actions/changed-files@v35
+        id: files
+        with:
+          files: data/*.csv
+      - name: install dependencies
+        run: npm install
+      - name: validate
+        if: steps.files.outputs.any_changed == 'true'
+        run: npm run db:validate -- ${{ steps.files.outputs.all_changed_files }}
